@@ -78,6 +78,35 @@ kb init my-knowledge-base
 - **版本范围**: `^1.0.0` (兼容版本), `~2.1.0` (补丁版本)
 - **预发布版本**: `1.0.0-alpha.1`
 
+##### 自动依赖更新
+
+知识库系统支持自动检测和更新依赖项：
+
+- 使用 `kb check-updates` 命令检查所有依赖项是否有新版本可用
+- 使用 `kb update` 命令更新依赖项到最新版本
+- 系统会自动处理版本冲突和依赖关系
+- 支持批量更新和单个依赖更新
+
+### 检查依赖更新
+
+检查知识库依赖项是否有可用更新：
+
+```bash
+kb check-updates
+```
+
+这将扫描当前知识库的所有依赖项，并显示哪些依赖项有新版本可用。
+
+### 更新依赖
+
+更新知识库的依赖项到最新版本：
+
+```bash
+kb update [依赖名称]
+```
+
+不带参数时，更新所有依赖项到最新版本。指定依赖名称时，只更新指定的依赖项。
+
 ### 打包知识库
 
 将知识库打包为发布格式：
@@ -94,6 +123,8 @@ kb package
 |------|------|------|
 | `kb init [目录名]` | 初始化知识库项目，自动下载所有依赖 | `--path` 指定知识库文件路径 |
 | `kb package` | 打包知识库为发布格式 | `--output` 指定输出路径 |
+| `kb check-updates` | 检查依赖项是否有可用更新 | - |
+| `kb update [依赖名称]` | 更新依赖项到最新版本 | - |
 | `kb cache info` | 显示缓存信息 | - |
 | `kb cache list` | 列出所有缓存的库 | - |
 | `kb cache clean [TARGET]` | 清理缓存，TARGET 可为 'all'、'library:name' 或 'library:version' | - |
@@ -157,6 +188,52 @@ pytest tests/ -v --cov=kb --cov-report=html
 
    执行清理操作时会要求确认，避免误删。
 
+### 依赖更新功能 (Dependency Updates)
+
+知识库工具提供完整的依赖管理功能，包括检查和更新依赖项。
+
+#### 检查依赖更新
+
+使用 `kb check-updates` 命令检查所有依赖项是否有新版本可用：
+
+```bash
+kb check-updates
+```
+
+该命令会：
+- 扫描当前知识库的所有依赖项
+- 查询远程仓库的最新版本
+- 显示有更新可用的依赖项列表
+- 显示当前版本和最新版本
+
+#### 更新依赖项
+
+使用 `kb update` 命令更新依赖项：
+
+```bash
+# 更新所有依赖项
+kb update
+
+# 更新特定依赖项
+kb update CommonLib
+```
+
+该命令会：
+- 下载最新版本的依赖项
+- 自动处理版本冲突
+- 更新 `deps/` 目录中的依赖项
+- 保留版本缓存以便将来使用
+
+#### 更新工作流程
+
+推荐的依赖更新工作流程：
+
+1. 使用 `kb check-updates` 查看可用的更新
+2. 评估更新的影响和兼容性
+3. 使用 `kb update` 更新依赖项
+4. 运行测试确保功能正常
+5. 使用 `kb package` 打包发布
+
 ### 测试结构
 
 ```
@@ -167,6 +244,7 @@ tests/
 │   ├── test_package.py    # package命令测试
 │   ├── test_main.py       # 主CLI测试
 │   ├── test_cache.py     # cache命令测试
+│   ├── test_update.py    # update命令测试
 │   └── test_integration.py # 集成测试
 └── core/
     ├── test_parser.py     # 解析器测试
@@ -185,12 +263,22 @@ knowlegde/
 │   │   ├── main.py          # 主CLI入口
 │   │   ├── init.py          # init命令
 │   │   ├── package.py       # package命令
+│   │   ├── cache.py         # cache命令
+│   │   ├── update.py        # update命令
 │   │   └── utils.py         # CLI工具函数
 │   ├── core/
 │   │   ├── __init__.py
 │   │   ├── models.py        # 数据模型
 │   │   ├── parser.py        # 解析器
 │   │   └── validator.py     # 验证器
+│   ├── update/
+│   │   ├── __init__.py
+│   │   ├── checker.py       # 依赖检查器
+│   │   ├── updater.py       # 依赖更新器
+│   │   └── models.py        # 更新数据模型
+│   ├── cache/
+│   │   ├── __init__.py
+│   │   └── manager.py       # 缓存管理器
 │   └── exceptions.py        # 自定义异常
 ├── tests/                   # 测试文件
 ├── requirements.txt         # 项目依赖

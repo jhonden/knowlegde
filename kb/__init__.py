@@ -2,4 +2,6 @@
 
 __version__ = "0.1.0"
 
+__all__ = ["KnowledgeParser", "KnowledgeValidator"]
+
 from .core import KnowledgeParser, KnowledgeValidator

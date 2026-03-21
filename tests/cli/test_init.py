@@ -19,7 +19,7 @@ def test_init_command():
 """)
         result = runner.invoke(cli, ["init"])
         assert result.exit_code == 0
-        assert "初始化完成" in result.output
+        assert "✓ 初始化完成" in result.output
 
 
 def test_init_without_knowledge_file():
@@ -53,7 +53,7 @@ def test_init_with_custom_path():
         # 使用--path参数指定路径
         result = runner.invoke(cli, ["init", "--path", str(subdir / "Knowledge.md")])
         assert result.exit_code == 0
-        assert "初始化完成" in result.output
+        assert "✓ 初始化完成" in result.output
         assert str(subdir / "Knowledge.md") in result.output
 
 

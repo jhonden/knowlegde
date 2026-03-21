@@ -168,7 +168,7 @@ class PackageDownloader:
             raise KnowledgeBaseError(f"无法解析缓存目录路径: {cache_dir}")
 
         # 检查路径是否包含遍历序列
-        if ".." in str(cache_dir) or "." in str(cache_dir):
+        if ".." in str(cache_dir):
             raise KnowledgeBaseError(f"不安全的缓存目录路径: {cache_dir}")
 
         # 检查路径是否试图访问敏感目录

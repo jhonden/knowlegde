@@ -2,5 +2,7 @@
 
 from .downloader import PackageDownloader
 from .extractor import PackageExtractor
+from .conflict import ConflictDetector
+from .resolver import DependencyResolver
 
-__all__ = ['PackageDownloader', 'PackageExtractor']
+__all__ = ['PackageDownloader', 'PackageExtractor', 'ConflictDetector', 'DependencyResolver']

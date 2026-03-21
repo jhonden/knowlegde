@@ -3,6 +3,8 @@
 import hashlib
 import os
 import re
+import tarfile
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -32,7 +34,7 @@ class PackageDownloader:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     def download(self, name: str, version: str, git_url: str, force: bool = False) -> Path:
-        """下载发布包。
+        """下载并解压发布包到版本目录。
 
         Args:
             name: 包名
@@ -41,56 +43,55 @@ class PackageDownloader:
             force: 是否强制重新下载
 
         Returns:
-            缓存文件路径
+            版本目录路径 (cache_dir/name/version/)
 
         Raises:
-            KnowledgeBaseError: 下载失败时抛出
+            KnowledgeBaseError: 下载或解压失败时抛出
         """
         # 验证输入参数
         self._validate_inputs(name, version, git_url)
 
-        # 构建缓存文件名（确保路径安全）
-        cache_file = self._build_cache_path(name, version, git_url)
+        # 构建版本目录路径
+        version_dir = self._build_version_dir_path(name, version)
 
-        # 检查缓存
-        if cache_file.exists() and not force:
-            return cache_file
+        # 检查缓存（版本目录已存在）
+        if version_dir.exists() and not force:
+            return version_dir
 
         # 构建下载URL
         download_url = self._build_download_url(git_url, name, version)
 
+        # 创建临时文件用于下载
+        with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as temp_file:
+            temp_path = Path(temp_file.name)
+
         try:
-            # 下载文件
+            # 下载文件到临时位置
             response = requests.get(download_url, stream=True, timeout=REQUEST_TIMEOUT)
             response.raise_for_status()
 
-            # 写入缓存
-            with open(cache_file, 'wb') as f:
+            # 写入临时文件
+            with open(temp_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
                     f.write(chunk)
 
-            return cache_file
+            # 解压到版本目录
+            self._extract_downloaded_package(temp_path, version_dir)
+
+            return version_dir
 
         except requests.exceptions.Timeout as e:
-            # 清理可能的部分下载文件
-            if cache_file.exists():
-                cache_file.unlink()
             raise KnowledgeBaseError(f"下载超时: {e}")
         except requests.exceptions.HTTPError as e:
-            # 清理可能的部分下载文件
-            if cache_file.exists():
-                cache_file.unlink()
             raise KnowledgeBaseError(f"HTTP错误: {e}")
         except requests.exceptions.ConnectionError as e:
-            # 清理可能的部分下载文件
-            if cache_file.exists():
-                cache_file.unlink()
             raise KnowledgeBaseError(f"连接错误: {e}")
         except requests.exceptions.RequestException as e:
-            # 清理可能的部分下载文件
-            if cache_file.exists():
-                cache_file.unlink()
             raise KnowledgeBaseError(f"下载失败: {e}")
+        finally:
+            # 清理临时文件
+            if temp_path.exists():
+                temp_path.unlink()
 
     def _build_download_url(self, git_url: str, name: str, version: str) -> str:
         """构建下载URL。
@@ -177,22 +178,87 @@ class PackageDownloader:
             if str(resolved_path).startswith(sensitive_dir):
                 raise KnowledgeBaseError(f"不允许使用敏感目录作为缓存目录: {cache_dir}")
 
-    def _build_cache_path(self, name: str, version: str, git_url: str) -> Path:
-        """构建安全的缓存文件路径。
+    def _build_version_dir_path(self, name: str, version: str) -> Path:
+        """构建版本目录路径。
 
         Args:
             name: 包名
             version: 版本号
-            git_url: Git仓库URL
 
         Returns:
-            缓存文件路径
+            版本目录路径 (cache_dir/name/version/)
         """
-        url_hash = hashlib.md5(git_url.encode()).hexdigest()
         # 确保文件名只包含安全字符
         safe_name = re.sub(r'[^\w\-_.]', '_', name)
         safe_version = re.sub(r'[^\w\-_.]', '_', version)
-        return self.cache_dir / f"{safe_name}_{safe_version}_{url_hash}.tar.gz"
+        return self.cache_dir / safe_name / safe_version
+
+    def _extract_downloaded_package(self, package_path: Path, version_dir: Path) -> None:
+        """解压下载的包到版本目录。
+
+        Args:
+            package_path: 下载的tar.gz文件路径
+            version_dir: 目标版本目录
+
+        Raises:
+            KnowledgeBaseError: 解压失败时抛出
+        """
+        import shutil
+
+        # 验证包文件是否存在
+        if not package_path.exists():
+            raise KnowledgeBaseError(f"发布包文件不存在: {package_path}")
+
+        # 验证包是否为文件
+        if not package_path.is_file():
+            raise KnowledgeBaseError(f"发布包路径必须是文件: {package_path}")
+
+        # 创建版本目录（包括所有父目录）
+        try:
+            version_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            raise KnowledgeBaseError(f"无法创建版本目录 {version_dir}: {e}")
+
+        # 验证文件是否为 tar.gz 格式
+        if not package_path.name.endswith('.tar.gz'):
+            raise KnowledgeBaseError(f"只支持 .tar.gz 格式的发布包: {package_path}")
+
+        # 清空版本目录（如果是重新下载）
+        if version_dir.exists() and any(version_dir.iterdir()):
+            for item in version_dir.iterdir():
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
+
+        # 解压发布包
+        try:
+            with tarfile.open(package_path, 'r:gz') as tar:
+                # 安全验证：检查是否有路径遍历攻击
+                members = tar.getmembers()
+                for member in members:
+                    # 检查成员路径是否包含遍历序列
+                    if '..' in member.name or member.name.startswith('/'):
+                        raise KnowledgeBaseError(f"发布包包含不安全路径: {member.name}")
+
+                    # 检查目标路径是否会超出目标目录
+                    target_member_path = version_dir / member.name
+                    try:
+                        target_member_path.resolve().relative_to(version_dir.resolve())
+                    except ValueError:
+                        raise KnowledgeBaseError(f"发布包包含试图逃逸目标目录的路径: {member.name}")
+
+                # 解压文件
+                tar.extractall(path=version_dir)
+
+        except tarfile.ReadError as e:
+            raise KnowledgeBaseError(f"无法读取tar.gz文件: {e}")
+        except tarfile.ExtractError as e:
+            raise KnowledgeBaseError(f"解压文件失败: {e}")
+        except OSError as e:
+            raise KnowledgeBaseError(f"文件操作失败: {e}")
+        except Exception as e:
+            raise KnowledgeBaseError(f"解压过程中发生未知错误: {e}")
 
     def _validate_inputs(self, name: str, version: str, git_url: str) -> None:
         """验证输入参数的有效性。

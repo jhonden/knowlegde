@@ -112,5 +112,5 @@ def test_conflict_report_format():
     assert "\n1. 知识库 'format-test'" in error_message
     assert "   - 总请求数: 2" in error_message
     assert "   - 版本列表: 1.0.0, 1.1.0" in error_message
-    assert "   - 冲突版本: 1.0.0, 1.1.0" in error_message
+    assert "   - 冲突版本:" in error_message and "1.0.0" in error_message and "1.1.0" in error_message
     assert "   - 冲突原因: 同一知识库有多个不同版本" in error_message

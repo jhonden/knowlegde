@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 from kb.core import KnowledgeParser
-from kb.dependency import DependencyResolver, PackageDownloader, PackageExtractor, ConflictDetector
+from kb.dependency import DependencyResolver, PackageDownloader, ConflictDetector
 from kb.exceptions import DependencyConflictError, KnowledgeBaseError
 
 # 常量定义
@@ -116,13 +116,11 @@ def _check_conflicts(conflict_detector: ConflictDetector, resolved_deps: list) -
         raise SystemExit(1)
 
 
-def _download_dependency(downloader: PackageDownloader, extractor: PackageExtractor,
-                       dep: any, deps_dir: Path) -> None:
-    """下载并解压单个依赖
+def _download_dependency(downloader: PackageDownloader, dep: any, deps_dir: Path) -> None:
+    """下载并设置单个依赖
 
     Args:
         downloader: 包下载器
-        extractor: 包解压器
         dep: 依赖对象
         deps_dir: 依赖目录
 
@@ -131,12 +129,19 @@ def _download_dependency(downloader: PackageDownloader, extractor: PackageExtrac
     """
     try:
         click.echo(f"  正在下载 {dep.name}@{dep.version}...")
-        downloaded_file = downloader.download(dep.name, dep.version, dep.git_url)
-        click.echo(f"  ✓ 下载完成: {downloaded_file.name}")
+        # downloader.download() 现在返回版本目录路径（已解压）
+        version_dir = downloader.download(dep.name, dep.version, dep.git_url)
+        click.echo(f"  ✓ 下载完成: {version_dir.name}")
 
-        click.echo(f"  正在解压到 {deps_dir}...")
-        extractor.extract(downloaded_file, deps_dir)
-        click.echo(f"  ✓ 解压完成")
+        # 将缓存版本目录链接或复制到项目的依赖目录
+        dep_dir = deps_dir / dep.name
+        dep_dir.mkdir(exist_ok=True)
+
+        # 创建指向版本目录的符号链接（如果不存在）
+        version_link = dep_dir / dep.version
+        if not version_link.exists():
+            version_link.symlink_to(version_dir)
+        click.echo(f"  ✓ 依赖已链接到 {version_link}")
     except KnowledgeBaseError as e:
         click.echo(f"  ✗ 处理依赖失败: {str(e)}")
         raise SystemExit(1)
@@ -158,7 +163,6 @@ def _process_dependencies(metadata, deps_dir: Path) -> None:
     # 初始化依赖管理组件
     resolver = DependencyResolver()
     downloader = PackageDownloader()
-    extractor = PackageExtractor()
     conflict_detector = ConflictDetector()
 
     # 解析依赖
@@ -170,7 +174,7 @@ def _process_dependencies(metadata, deps_dir: Path) -> None:
     # 下载和解压依赖
     for i, dep in enumerate(resolved_deps, 1):
         click.echo(f"\n处理依赖 {i}/{len(resolved_deps)}: {dep.name}@{dep.version}")
-        _download_dependency(downloader, extractor, dep, deps_dir)
+        _download_dependency(downloader, dep, deps_dir)
 
 
 def _setup_dependencies(knowledge_file: Path) -> Path:

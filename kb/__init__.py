@@ -1,7 +1,7 @@
-"""知识库系统核心包。"""
-
-from .core import KnowledgeParser, KnowledgeValidator
+"""Knowledge Base CLI Tool - 知识库命令行工具"""
 
 __version__ = "0.1.0"
 
-__all__ = ["KnowledgeParser", "KnowledgeValidator"]
+from .cli.main import cli
+
+__all__ = ["cli"]

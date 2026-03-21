@@ -2,7 +2,7 @@
 name = "kb"
 version = "0.1.0"
 description = "Knowledge Base CLI Tool"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = [
     "pydantic>=2.0.0",
 ]

@@ -73,12 +73,12 @@ def _display_metadata_info(metadata) -> None:
             click.echo(f"  - {dep.name}@{dep.version} ({dep.git_url})")
 
 
-def _resolve_dependencies(resolver: DependencyResolver, dependencies) -> list:
+def _resolve_dependencies(resolver: DependencyResolver, metadata) -> list:
     """解析依赖关系
 
     Args:
         resolver: 依赖解析器
-        dependencies: 依赖列表
+        metadata: 知识库元数据
 
     Returns:
         list: 解析后的依赖列表
@@ -87,7 +87,7 @@ def _resolve_dependencies(resolver: DependencyResolver, dependencies) -> list:
         SystemExit: 如果解析失败
     """
     try:
-        resolved_deps = resolver.resolve(dependencies)
+        resolved_deps = resolver.resolve(metadata)
         click.echo("✓ 依赖解析完成")
         return resolved_deps
     except DependencyConflictError as e:
@@ -131,7 +131,7 @@ def _download_dependency(downloader: PackageDownloader, extractor: PackageExtrac
     """
     try:
         click.echo(f"  正在下载 {dep.name}@{dep.version}...")
-        downloaded_file = downloader.download(dep)
+        downloaded_file = downloader.download(dep.name, dep.version, dep.git_url)
         click.echo(f"  ✓ 下载完成: {downloaded_file.name}")
 
         click.echo(f"  正在解压到 {deps_dir}...")
@@ -162,7 +162,7 @@ def _process_dependencies(metadata, deps_dir: Path) -> None:
     conflict_detector = ConflictDetector()
 
     # 解析依赖
-    resolved_deps = _resolve_dependencies(resolver, metadata.dependencies)
+    resolved_deps = _resolve_dependencies(resolver, metadata)
 
     # 检查版本冲突
     _check_conflicts(conflict_detector, resolved_deps)

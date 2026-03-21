@@ -94,6 +94,9 @@ kb package
 |------|------|------|
 | `kb init [目录名]` | 初始化知识库项目，自动下载所有依赖 | `--path` 指定知识库文件路径 |
 | `kb package` | 打包知识库为发布格式 | `--output` 指定输出路径 |
+| `kb cache info` | 显示缓存信息 | - |
+| `kb cache list` | 列出所有缓存的库 | - |
+| `kb cache clean [TARGET]` | 清理缓存，TARGET 可为 'all'、'library:name' 或 'library:version' | - |
 | `kb --version` | 显示版本信息 | - |
 | `kb --help` | 显示帮助信息 | - |
 
@@ -117,6 +120,43 @@ pytest tests/ -v --cov=kb --cov-report=html
 
 覆盖率报告将生成在 `htmlcov/` 目录中。
 
+### 缓存管理 (Cache Management)
+
+知识库工具提供完整的缓存管理功能，可以查看、列出和清理缓存的库。
+
+#### 缓存命令使用说明
+
+1. **查看缓存信息**
+
+   ```bash
+   kb cache info
+   ```
+
+   显示缓存目录路径、总大小、库数量和版本数量等信息。
+
+2. **列出所有缓存的库**
+
+   ```bash
+   kb cache list
+   ```
+
+   显示所有缓存的库的名称、版本和大小信息。
+
+3. **清理缓存**
+
+   ```bash
+   # 清理所有缓存
+   kb cache clean all
+
+   # 清理特定库的所有版本
+   kb cache clean library-name
+
+   # 清理特定库的特定版本
+   kb cache clean library-name:version
+   ```
+
+   执行清理操作时会要求确认，避免误删。
+
 ### 测试结构
 
 ```
@@ -126,6 +166,7 @@ tests/
 │   ├── test_init.py      # init命令测试
 │   ├── test_package.py    # package命令测试
 │   ├── test_main.py       # 主CLI测试
+│   ├── test_cache.py     # cache命令测试
 │   └── test_integration.py # 集成测试
 └── core/
     ├── test_parser.py     # 解析器测试

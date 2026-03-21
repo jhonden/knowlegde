@@ -94,6 +94,42 @@ class TestUpdateDependency:
         content = knowledge_file.read_text(encoding="utf-8")
         assert "| UtilsLib | 3.0.0 | https://github.com/new-owner/utils-lib |" in content
 
+    def test_update_all_dependencies(self, updater, knowledge_file):
+        """测试更新所有依赖。"""
+        # 更新多个依赖
+        updates = {
+            "CommonDataTypes": "2.0.0",
+            "UtilsLib": "3.0.0"
+        }
+        updater.update_all_dependencies(knowledge_file, updates)
+
+        # 验证更新
+        content = knowledge_file.read_text(encoding="utf-8")
+        assert "| CommonDataTypes | 2.0.0 |" in content
+        assert "| UtilsLib | 3.0.0 |" in content
+
+        # 验证备份文件存在
+        backup_file = knowledge_file.with_suffix(".md.backup")
+        assert backup_file.exists()
+
+    def test_update_all_dependencies_with_invalid_version(self, updater, knowledge_file):
+        """测试更新所有依赖时使用无效版本号。"""
+        updates = {
+            "CommonDataTypes": "invalid-version",
+            "UtilsLib": "3.0.0"
+        }
+        with pytest.raises(KnowledgeBaseError, match="版本号格式无效"):
+            updater.update_all_dependencies(knowledge_file, updates)
+
+    def test_update_all_dependencies_nonexistent(self, updater, knowledge_file):
+        """测试更新所有依赖时包含不存在的依赖。"""
+        updates = {
+            "CommonDataTypes": "2.0.0",
+            "NonExistentLib": "3.0.0"
+        }
+        with pytest.raises(KnowledgeBaseError, match="不存在"):
+            updater.update_all_dependencies(knowledge_file, updates)
+
     def test_update_nonexistent_dependency(self, updater, knowledge_file):
         """测试更新不存在的依赖。"""
         with pytest.raises(KnowledgeBaseError, match="不存在"):
@@ -125,6 +161,22 @@ class TestUpdateDependency:
 class TestBackupKnowledgeFile:
     """测试备份功能。"""
 
+    def test_create_backup(self, updater, knowledge_file):
+        """测试创建备份文件。"""
+        # 直接调用创建备份方法
+        backup_file = updater._create_backup(knowledge_file)
+
+        # 验证备份文件路径
+        assert backup_file == knowledge_file.with_suffix(".md.backup")
+
+        # 验证备份文件存在
+        assert backup_file.exists()
+
+        # 验证备份内容与原文件一致
+        backup_content = backup_file.read_text(encoding="utf-8")
+        original_content = knowledge_file.read_text(encoding="utf-8")
+        assert backup_content == original_content
+
     def test_backup_knowledge_file(self, updater, knowledge_file):
         """测试备份知识库文件。"""
         # 更新依赖会自动创建备份
@@ -142,6 +194,23 @@ class TestBackupKnowledgeFile:
         backup_content = backup_file.read_text(encoding="utf-8")
         assert "| CommonDataTypes | 1.0.0 |" in backup_content
         assert "| CommonDataTypes | 2.0.0 |" not in backup_content
+
+    def test_backup_missing(self, updater, knowledge_file):
+        """测试更新后备份文件不存在的情况。"""
+        # 手动删除备份文件
+        backup_file = knowledge_file.with_suffix(".md.backup")
+        if backup_file.exists():
+            backup_file.unlink()
+
+        # 更新依赖
+        updater.update_dependency(
+            knowledge_file,
+            "CommonDataTypes",
+            "2.0.0"
+        )
+
+        # 验证备份文件被创建
+        assert backup_file.exists()
 
     def test_backup_replaces_existing_backup(self, updater, knowledge_file):
         """测试重复更新时替换现有备份。"""

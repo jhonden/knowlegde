@@ -66,6 +66,55 @@ class DependencyUpdater:
         with open(knowledge_file, "w", encoding="utf-8", newline='\n') as f:
             f.write(updated_content)
 
+    def update_all_dependencies(
+        self,
+        knowledge_file: Path,
+        updates: dict[str, str]
+    ) -> None:
+        """更新知识库文件中的所有依赖版本。
+
+        Args:
+            knowledge_file: 知识库文件路径 (Knowledge.md)
+            updates: 依赖名称到新版本的映射字典
+
+        Raises:
+            FileNotFoundError: 知识库文件不存在
+            KnowledgeBaseError: 更新失败
+        """
+        # 验证文件存在
+        if not knowledge_file.exists():
+            raise FileNotFoundError(f"知识库文件不存在: {knowledge_file}")
+
+        # 验证所有版本号格式
+        for dep_name, version in updates.items():
+            self._validate_version_format(version)
+
+        # 读取文件内容
+        with open(knowledge_file, "r", encoding="utf-8", newline='\n') as f:
+            content = f.read()
+
+        # 检查所有依赖是否存在
+        for dep_name in updates.keys():
+            if not self._dependency_exists(content, dep_name):
+                raise KnowledgeBaseError(f"依赖 '{dep_name}' 不存在")
+
+        # 创建备份
+        self._create_backup(knowledge_file)
+
+        # 更新所有依赖
+        updated_content = content
+        for dep_name, new_version in updates.items():
+            updated_content = self._update_dependency_in_content(
+                updated_content, dep_name, new_version, None
+            )
+
+        # 验证更新后的内容
+        self._validate_updated_content(updated_content, knowledge_file)
+
+        # 写回文件
+        with open(knowledge_file, "w", encoding="utf-8", newline='\n') as f:
+            f.write(updated_content)
+
     def _validate_version_format(self, version: str) -> None:
         """验证版本号格式。
 

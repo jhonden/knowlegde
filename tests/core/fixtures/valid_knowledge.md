@@ -1,52 +1,39 @@
-## 知识库名称
+# FileFormatParser 知识库
 
-**知识库名称**: test-knowledge
+## 基本信息
 
-## 版本
-
-**版本**: 1.2.3
-
-## 类型
-
-**类型**: agent
-
-## 描述
-
-这是一个测试知识库，用于验证解析器的功能。
+- **名称**: FileFormatParser
+- **版本**: 1.2.0
+- **类型**: structure-knowledge
+- **职责描述**: 封装特定文件格式的解析知识
 
 ## 依赖
 
-| 依赖名称 | 版本 | Git URL |
-| dep1 | 1.0.0 | https://github.com/test/dep1.git |
-| dep2 | 2.3.4 | https://github.com/test/dep2.git |
+| 知识库名称 | 版本号 | Git地址 |
+|-----------|--------|---------|
+| CommonDataTypes | 1.2.0 | https://github.com/example/common-data-types |
 
-## 排除的依赖
+## 排除依赖
 
-| 依赖名称 | 版本 | 排除原因 |
-| old-dep | 0.5.0 | 已弃用，不再维护 |
+| 知识库名称 | 版本号 | 原因 |
+|-----------|--------|------|
+| OldParser | 1.0.0 | 已废弃 |
 
-## 应用场景
+## 适用场景
 
-- 场景一：自动化测试
-- 场景二：代码生成
-- 场景三：数据分析
+文件格式解析、数据结构设计
 
-## 能力
+## 对外能力
 
-- 自然语言处理
-- 代码分析
-- 自动化测试
+- 提供文件格式规范
+- 定义字段结构和类型
 
-## 文件图结构
+## 文件路径图谱
 
-```json
-{
-  "nodes": [
-    {"id": "n1", "label": "模块1"},
-    {"id": "n2", "label": "模块2"}
-  ],
-  "edges": [
-    {"source": "n1", "target": "n2"}
-  ]
-}
+```
+src/
+├── Knowledge.md [核心元数据]
+├── overview.md [概览]
+└── structure/
+    └── file-format.md [文件格式]
 ```

@@ -4,6 +4,7 @@ from pathlib import Path
 import click
 
 from kb.core import KnowledgeParser
+from kb.cli.utils import find_knowledge_file
 
 
 @click.command()
@@ -24,10 +25,12 @@ def package(src: str) -> None:
         raise click.Abort()
 
     # 检查Knowledge.md是否存在
-    knowledge_file = cwd / "Knowledge.md"
-    if not knowledge_file.exists():
-        click.echo(f"错误: 未找到知识库文件 '{knowledge_file}'")
-        click.echo("请确保文件存在")
+    try:
+        knowledge_file = find_knowledge_file(cwd)
+        click.echo(f"找到知识库文件: {knowledge_file}")
+    except FileNotFoundError:
+        click.echo(f"错误: 未找到知识库文件 'Knowledge.md'")
+        click.echo("请确保文件存在于当前目录或上级目录中")
         raise click.Abort()
 
     # 创建publish目录（如果不存在）
@@ -55,6 +58,10 @@ def package(src: str) -> None:
     package_name = f"{name}-{version}.tar.gz"
     package_path = publish_dir / package_name
 
+    # TODO: 读取 .kb-package.yml 配置文件（未来功能）
+
+    # TODO: 根据配置确定要包含的文件列表（未来功能）
+
     # 创建tar.gz包
     with tarfile.open(package_path, "w:gz") as tar:
         # 添加src目录下的所有文件
@@ -67,3 +74,5 @@ def package(src: str) -> None:
         tar.add(knowledge_file, arcname="Knowledge.md")
 
     click.echo(f"打包完成: {package_path}")
+
+    return 0

@@ -8,5 +8,12 @@ def cli():
     pass
 
 
+# Import and register commands
+from kb.cli.init import init as init_command  # noqa: F401, E402
+from kb.cli.package import package as package_command  # noqa: F401, E402
+cli.add_command(init_command)
+cli.add_command(package_command)
+
+
 if __name__ == "__main__":
     cli()

@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Optional
 
 from kb.core import KnowledgeParser
+from kb.dependency import DependencyResolver, PackageDownloader, PackageExtractor, ConflictDetector
+from kb.exceptions import DependencyConflictError, KnowledgeBaseError
 
 
 @click.command()
@@ -55,13 +57,71 @@ def init(path: Optional[str]) -> int:
             for dep in metadata.dependencies:
                 click.echo(f"  - {dep.name}@{dep.version} ({dep.git_url})")
 
-        # TODO: 检查缓存
-        # TODO: 下载依赖
-        # TODO: 解压到deps目录
+        # 初始化依赖管理组件
+        click.echo("\n开始处理依赖...")
 
-        click.echo("初始化完成")
+        deps_dir = knowledge_file.parent / "deps"
+        deps_dir.mkdir(exist_ok=True)
+
+        # 初始化依赖管理组件
+        resolver = DependencyResolver()
+        downloader = PackageDownloader()
+        extractor = PackageExtractor()
+        conflict_detector = ConflictDetector()
+
+        # 处理依赖
+        if metadata.dependencies:
+            click.echo(f"发现 {len(metadata.dependencies)} 个依赖")
+
+            # 解析依赖
+            try:
+                resolved_deps = resolver.resolve(metadata.dependencies)
+                click.echo("✓ 依赖解析完成")
+            except DependencyConflictError as e:
+                click.echo(f"✗ 依赖冲突: {str(e)}")
+                return 1
+            except KnowledgeBaseError as e:
+                click.echo(f"✗ 依赖解析错误: {str(e)}")
+                return 1
+
+            # 检查版本冲突
+            try:
+                conflict_detector.check_conflicts(resolved_deps)
+                click.echo("✓ 版本冲突检查通过")
+            except DependencyConflictError as e:
+                click.echo(f"✗ 版本冲突: {str(e)}")
+                return 1
+
+            # 下载和解压依赖
+            for i, dep in enumerate(resolved_deps, 1):
+                click.echo(f"\n处理依赖 {i}/{len(resolved_deps)}: {dep.name}@{dep.version}")
+
+                try:
+                    # 依赖
+                    click.echo(f"  正在下载 {dep.name}@{dep.version}...")
+                    downloaded_file = downloader.download(dep)
+                    click.echo(f"  ✓ 下载完成: {downloaded_file.name}")
+
+                    # 解压
+                    click.echo(f"  正在解压到 {deps_dir}...")
+                    extractor.extract(downloaded_file, deps_dir)
+                    click.echo(f"  ✓ 解压完成")
+
+                except KnowledgeBaseError as e:
+                    click.echo(f"  ✗ 处理依赖失败: {str(e)}")
+                    return 1
+        else:
+            click.echo("✓ 没有发现依赖")
+
+        click.echo("\n✓ 初始化完成")
         return 0
+    except DependencyConflictError as e:
+        click.echo(f"依赖冲突错误: {str(e)}")
+        return 1
+    except KnowledgeBaseError as e:
+        click.echo(f"知识库错误: {str(e)}")
+        return 1
     except Exception as e:
-        click.echo(f"解析知识库文件时发生错误: {str(e)}")
+        click.echo(f"未知错误: {str(e)}")
         return 1
 

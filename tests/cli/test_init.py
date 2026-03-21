@@ -8,7 +8,15 @@ def test_init_command():
     runner = CliRunner()
     with runner.isolated_filesystem():
         # 创建Knowledge.md文件
-        Path("Knowledge.md").write_text("# Test Knowledge Base")
+        Path("Knowledge.md").write_text("""# Test Knowledge Base
+
+## 基本信息
+
+- **名称**: TestLib
+- **版本**: 1.0.0
+- **类型**: test
+- **职责描述**: 测试知识库
+""")
         result = runner.invoke(cli, ["init"])
         assert result.exit_code == 0
         assert "初始化完成" in result.output
@@ -32,7 +40,15 @@ def test_init_with_custom_path():
         # 在子目录中创建Knowledge.md
         subdir = Path("subdir")
         subdir.mkdir()
-        (subdir / "Knowledge.md").write_text("# Test Knowledge Base")
+        (subdir / "Knowledge.md").write_text("""# Test Knowledge Base
+
+## 基本信息
+
+- **名称**: TestLib
+- **版本**: 1.0.0
+- **类型**: test
+- **职责描述**: 测试知识库
+""")
 
         # 使用--path参数指定路径
         result = runner.invoke(cli, ["init", "--path", str(subdir / "Knowledge.md")])

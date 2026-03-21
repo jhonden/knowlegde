@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.11+, requests 2.x, pytest
 
+**Cross-Platform Support:**
+- 使用 `pathlib.Path` 处理跨平台文件路径
+- 文件写入时显式指定 `newline='\n'` 确保一致性
+- 正则表达式匹配 HTML 时考虑不同平台的换行符
+
 ---
 
 ## File Structure
@@ -532,14 +537,16 @@ class DependencyUpdater:
             dependency_name: 依赖名称
             new_version: 新版本号
         """
-        content = knowledge_file.read_text(encoding="utf-8")
+        # 跨平台：显式指定 newline='\n' 确保一致性
+        content = knowledge_file.read_text(encoding="utf-8", newline='\n')
 
         # 使用正则表达式替换依赖表中的版本号
         # 匹配: | Dep1 | 1.2.0 | ... |
         pattern = rf"(\|\s*{re.escape(dependency_name)}\s*\|\s*)\d+\.\d+\.\d+(\s*\|)"
         content = re.sub(pattern, rf"\g<1>{new_version}\g<2>", content)
 
-        knowledge_file.write_text(content, encoding="utf-8")
+        # 跨平台：显式指定 newline='\n' 确保一致性
+        knowledge_file.write_text(content, encoding="utf-8", newline='\n')
 ```
 
 - [ ] **Step 5: 添加导入**

@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.11+, requests 2.x, pytest
 
+**Cross-Platform Support:**
+- 使用 `pathlib.Path` 处理跨平台文件路径
+- tar.gz 格式在所有平台都能正常解压
+- requests 库跨平台兼容
+
 ---
 
 ## File Structure

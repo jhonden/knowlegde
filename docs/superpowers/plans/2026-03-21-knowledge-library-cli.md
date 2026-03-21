@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.11+, Click 8.x, pytest
 
+**Cross-Platform Support:**
+- Click 框架支持 Windows、macOS、Linux
+- 文件路径使用 `pathlib.Path`，自动处理路径分隔符
+- tar.gz 格式在所有平台都能正常打包和解压
+
 ---
 
 ## File Structure

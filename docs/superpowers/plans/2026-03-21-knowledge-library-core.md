@@ -8,6 +8,12 @@
 
 **Tech Stack:** Python 3.11+, pydantic 2.x, pytest
 
+**Cross-Platform Support:**
+- 使用 `pathlib.Path` 处理文件路径（跨平台兼容）
+- 文件读写时显式指定 `newline='\n'` 确保跨平台一致性
+- tar.gz 格式在 Windows 和 Unix 系统上都能正常工作
+- Click 框架支持 Windows、macOS、Linux
+
 ---
 
 ## File Structure
@@ -345,7 +351,8 @@ class KnowledgeParser:
         if not file_path.exists():
             raise FileNotFoundError(f"知识库文件不存在: {file_path}")
 
-        content = file_path.read_text(encoding="utf-8")
+        # 跨平台：显式指定 newline='\n' 确保一致性
+        content = file_path.read_text(encoding="utf-8", newline='\n')
 
         # 提取基本信息
         name = self._extract_value(content, "名称")

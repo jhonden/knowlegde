@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.11+, Click 8.x, pytest
 
+**Cross-Platform Support:**
+- `Path.home()` 在所有平台返回正确的用户主目录路径
+- 文件操作使用 `pathlib.Path`，自动处理路径分隔符
+- Click 命令行界面跨平台兼容
+
 ---
 
 ## File Structure

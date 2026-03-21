@@ -1,8 +1,6 @@
 from click.testing import CliRunner
 from kb.cli.main import cli
 from pathlib import Path
-import tempfile
-import os
 
 
 def test_init_command():
@@ -52,3 +50,31 @@ def test_init_with_nonexistent_path():
         assert result.exit_code == 0
         assert "错误: 未找到知识库文件" in result.output
         assert "nonexistent.md" in result.output
+
+
+def test_init_with_directory_path():
+    """测试使用目录路径初始化（应该失败）"""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        # 创建目录而不是文件
+        subdir = Path("subdir")
+        subdir.mkdir()
+        (subdir / "Knowledge.md").write_text("# Test Knowledge Base")
+
+        # 使用目录路径应该失败
+        result = runner.invoke(cli, ["init", "--path", str(subdir)])
+        assert result.exit_code == 0
+        assert "错误: 指定的路径" in result.output
+        assert "是一个目录" in result.output
+
+
+def test_init_with_empty_file():
+    """测试使用空文件初始化（应该失败）"""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        # 创建空文件
+        Path("Knowledge.md").write_text("")
+        result = runner.invoke(cli, ["init"])
+        assert result.exit_code == 0
+        assert "错误: 知识库文件" in result.output
+        assert "为空" in result.output

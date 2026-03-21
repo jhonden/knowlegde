@@ -1,7 +1,6 @@
 """测试核心数据模型。"""
 
 import pytest
-from pydantic import ValidationError
 
 from kb.core.models import Dependency, ExcludedDependency, KnowledgeMetadata
 from kb.exceptions import VersionFormatError
@@ -19,15 +18,15 @@ class TestDependency:
 
     def test_dependency_invalid_version_format(self):
         """验证版本号格式错误。"""
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(VersionFormatError) as exc_info:
             Dependency(name="test-kb", version="1.2", git_url="https://github.com/test/test-kb.git")
-        assert "version" in str(exc_info.value).lower()
+        assert "版本号" in str(exc_info.value)
 
     def test_dependency_invalid_version_non_numeric(self):
         """验证版本号非数字错误。"""
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(VersionFormatError) as exc_info:
             Dependency(name="test-kb", version="a.b.c", git_url="https://github.com/test/test-kb.git")
-        assert "version" in str(exc_info.value).lower()
+        assert "版本号" in str(exc_info.value)
 
 
 class TestExcludedDependency:

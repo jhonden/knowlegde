@@ -1,7 +1,8 @@
 """知识库核心数据模型。"""
 
-import re
 from typing import Optional
+
+from kb.exceptions import VersionFormatError
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -31,14 +32,20 @@ class Dependency(BaseModel):
             验证通过的版本号
 
         Raises:
-            ValueError: 如果版本号格式不符合语义化版本规范
+            VersionFormatError: 如果版本号格式不符合语义化版本规范
         """
         # 语义化版本格式：主版本.次版本.修订版本
         # 每个部分必须是正整数
-        pattern = r"^(\d+)\.(\d+)\.(\d+)$"
-        if not re.match(pattern, v):
-            raise ValueError(
+        parts = v.split(".")
+        if len(parts) != 3:
+            raise VersionFormatError(
                 f"版本号格式错误，必须为语义化版本号格式（主版本.次版本.修订版本），例如：1.2.3，当前值：{v}"
+            )
+        try:
+            major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
+        except ValueError:
+            raise VersionFormatError(
+                f"版本号格式错误，每个部分必须是数字，当前值：{v}"
             )
         return v
 

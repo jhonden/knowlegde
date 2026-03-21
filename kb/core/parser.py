@@ -75,7 +75,8 @@ class KnowledgeParser:
         Returns:
             章节的值，如果不存在则返回空字符串
         """
-        pattern = rf"^#\s+{re.escape(section_name)}\s*$\n([^\n]+)"
+        # 匹配**名称**: value格式
+        pattern = rf"^##\s+{re.escape(section_name)}\s*$\n(?:\n)?\*\*{re.escape(section_name)}\*\*:\s*([^\n]+)"
         match = re.search(pattern, content, re.MULTILINE)
         if match:
             return match.group(1).strip()
@@ -92,7 +93,7 @@ class KnowledgeParser:
             章节的文本内容，如果不存在则返回None
         """
         # 匹配从章节标题到下一个标题或文件结束之间的所有文本
-        pattern = rf"^#\s+{re.escape(section_name)}\s*$\n(.+?)(?=\n#|\Z)"
+        pattern = rf"^##\s+{re.escape(section_name)}\s*$\n(?:\n)?(.+?)(?=\n##|\Z)"
         match = re.search(pattern, content, re.MULTILINE | re.DOTALL)
         if match:
             text = match.group(1).strip()
@@ -110,7 +111,7 @@ class KnowledgeParser:
             列表项列表
         """
         # 匹配从章节标题到下一个标题或文件结束之间的内容
-        pattern = rf"^#\s+{re.escape(section_name)}\s*$\n(?:\n)?((?:[^\n]+\n)+?)(?=\n#|\Z)"
+        pattern = rf"^##\s+{re.escape(section_name)}\s*$\n(?:\n)?((?:[^\n]+\n)+?)(?=\n##|\Z)"
         match = re.search(pattern, content, re.MULTILINE)
         if match:
             items_text = match.group(1)
@@ -134,7 +135,7 @@ class KnowledgeParser:
         Returns:
             代码块内容，如果不存在则返回None
         """
-        pattern = rf"^#\s+{re.escape(section_name)}\s*$\n```(?:json)?\s*\n(.+?)\n```"
+        pattern = rf"^##\s+{re.escape(section_name)}\s*$\n(?:\n)?```(?:json)?\s*\n(.+?)\n```"
         match = re.search(pattern, content, re.MULTILINE | re.DOTALL)
         if match:
             code = match.group(1).strip()
@@ -151,15 +152,15 @@ class KnowledgeParser:
             Dependency对象列表
         """
         # 匹配从"依赖"标题到下一个标题或文件结束之间的表格
-        pattern = r"^#\s+依赖\s*$\n(?:\n)?((?:\|[^\n]+\n)+?)(?=\n#|\Z)"
+        pattern = r"^##\s+依赖\s*$\n(?:\n)?((?:\|[^\n]+\n)+?)(?=\n##|\Z)"
         match = re.search(pattern, content, re.MULTILINE)
         if not match:
             return []
 
         dependencies = []
         rows = match.group(1).strip().split("\n")
-        # 跳过表头和分隔行（前两行）
-        for row in rows[2:]:
+        # 跳过表头行（第一行）
+        for row in rows[1:]:
             row = row.strip()
             if row.startswith("|") and row.endswith("|"):
                 cells = [cell.strip() for cell in row.split("|")[1:-1]]
@@ -183,15 +184,15 @@ class KnowledgeParser:
             ExcludedDependency对象列表
         """
         # 匹配从"排除的依赖"标题到下一个标题或文件结束之间的表格
-        pattern = r"^#\s+排除的依赖\s*$\n(?:\n)?((?:\|[^\n]+\n)+?)(?=\n#|\Z)"
+        pattern = r"^##\s+排除的依赖\s*$\n(?:\n)?((?:\|[^\n]+\n)+?)(?=\n##|\Z)"
         match = re.search(pattern, content, re.MULTILINE)
         if not match:
             return []
 
         excluded_dependencies = []
         rows = match.group(1).strip().split("\n")
-        # 跳过表头和分隔行（前两行）
-        for row in rows[2:]:
+        # 跳过表头行（第一行）
+        for row in rows[1:]:
             row = row.strip()
             if row.startswith("|") and row.endswith("|"):
                 cells = [cell.strip() for cell in row.split("|")[1:-1]]

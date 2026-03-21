@@ -30,7 +30,7 @@ class TestPackageDownloader:
         """测试无效URL下载失败。"""
         invalid_url = "https://invalid-url.com/owner/repo"
 
-        with pytest.raises(KnowledgeBaseError, match="不支持的Git平台"):
+        with pytest.raises(KnowledgeBaseError, match="只支持GitHub和GitLab"):
             downloader.download("test-package", "1.0.0", invalid_url)
 
     def test_build_download_url_github(self, downloader):
@@ -111,3 +111,58 @@ class TestPackageDownloader:
         # 验证抛出异常
         with pytest.raises(KnowledgeBaseError, match="下载失败"):
             downloader.download("test-package", "1.0.0", "https://github.com/owner/repo")
+
+    def test_validate_inputs(self, downloader):
+        """测试输入验证。"""
+        # 测试空包名
+        with pytest.raises(KnowledgeBaseError, match="包名不能为空"):
+            downloader._validate_inputs("", "1.0.0", "https://github.com/owner/repo")
+
+        # 测试无效包名
+        with pytest.raises(KnowledgeBaseError, match="包名格式无效"):
+            downloader._validate_inputs("123package", "1.0.0", "https://github.com/owner/repo")
+
+        # 测试空版本号
+        with pytest.raises(KnowledgeBaseError, match="版本号不能为空"):
+            downloader._validate_inputs("package", "", "https://github.com/owner/repo")
+
+        # 测试无效版本号
+        with pytest.raises(KnowledgeBaseError, match="版本号格式无效"):
+            downloader._validate_inputs("package", "invalid", "https://github.com/owner/repo")
+
+        # 测试空URL
+        with pytest.raises(KnowledgeBaseError, match="Git URL不能为空"):
+            downloader._validate_inputs("package", "1.0.0", "")
+
+        # 测试无效协议URL
+        with pytest.raises(KnowledgeBaseError, match="Git URL格式无效"):
+            downloader._validate_inputs("package", "1.0.0", "ftp://github.com/owner/repo")
+
+        # 测试不支持的平台
+        with pytest.raises(KnowledgeBaseError, match="只支持GitHub和GitLab"):
+            downloader._validate_inputs("package", "1.0.0", "https://bitbucket.com/owner/repo")
+
+        # 测试有效输入应该通过
+        downloader._validate_inputs("my-package", "1.0.0", "https://github.com/owner/repo")
+
+    def test_build_cache_path(self, downloader, temp_cache_dir):
+        """测试缓存路径构建。"""
+        downloader.cache_dir = temp_cache_dir
+
+        # 测试特殊字符的处理
+        path = downloader._build_cache_path("my-package@#$", "1.0.0", "https://github.com/owner/repo")
+        assert "my-package___" in path.name  # 特殊字符被替换为下划线
+        assert path.parent == temp_cache_dir
+
+    def test_validate_cache_dir(self, downloader):
+        """测试缓存目录验证。"""
+        # 测试相对路径（应该失败）
+        with pytest.raises(KnowledgeBaseError, match="缓存目录必须是绝对路径"):
+            downloader._validate_cache_dir(Path("relative/path"))
+
+        # 测试路径遍历攻击（应该失败）
+        with pytest.raises(KnowledgeBaseError, match="不安全的缓存目录路径"):
+            downloader._validate_cache_dir(Path("/safe/../../../etc/passwd"))
+
+        # 测试正常绝对路径（应该通过）
+        downloader._validate_cache_dir(Path("/safe/directory"))

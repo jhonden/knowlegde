@@ -1,0 +1,23 @@
+{
+  "name": "knowledge-base-marketplace",
+  "owner": {
+    "name": "jhonden",
+    "email": "jhonden@example.com"
+  },
+  "metadata": {
+    "description": "Knowledge base development skills and tools marketplace",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "knowledge-base-development",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/jhonden/knowlegde.git"
+      },
+      "description": "Complete workflow for knowledge base projects: create, develop, package, and publish with CLI guidance",
+      "version": "1.0.0",
+      "strict": true
+    }
+  ]
+}

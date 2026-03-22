@@ -3,6 +3,8 @@
 import hashlib
 import os
 import re
+import shutil
+import subprocess
 import tarfile
 import tempfile
 from pathlib import Path
@@ -18,6 +20,7 @@ REQUEST_TIMEOUT = 30
 CACHE_DIR = Path.home() / ".kb-cache"
 PACKAGE_NAME_PATTERN = r'^[a-zA-Z][a-zA-Z0-9_-]*$'
 VERSION_PATTERN = r'^\d+\.\d+\.\d+(-[a-zA-Z0-9_.-]+)?$'
+PUBLISH_DIR = "publish"
 
 
 class PackageDownloader:
@@ -34,7 +37,7 @@ class PackageDownloader:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     def download(self, name: str, version: str, git_url: str, force: bool = False) -> Path:
-        """下载并解压发布包到版本目录。
+        """从Git仓库的publish/目录下载并解压发布包到版本目录。
 
         Args:
             name: 包名
@@ -58,65 +61,65 @@ class PackageDownloader:
         if version_dir.exists() and not force:
             return version_dir
 
-        # 构建下载URL
-        download_url = self._build_download_url(git_url, name, version)
+        # 创建临时目录用于clone仓库
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_repo_path = Path(temp_dir) / "repo"
+            try:
+                # Clone Git 仓库到临时目录（只获取最新提交，不获取历史）
+                subprocess.run(
+                    ["git", "clone", "--depth", "1", git_url, str(temp_repo_path)],
+                    check=True,
+                    capture_output=True,
+                    text=True
+                )
 
-        # 创建临时文件用于下载
-        with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as temp_file:
-            temp_path = Path(temp_file.name)
+                # 查找发布包文件
+                package_file = self._find_package_file(temp_repo_path, name, version)
 
-        try:
-            # 下载文件到临时位置
-            response = requests.get(download_url, stream=True, timeout=REQUEST_TIMEOUT)
-            response.raise_for_status()
+                # 解压到版本目录
+                self._extract_downloaded_package(package_file, version_dir)
 
-            # 写入临时文件
-            with open(temp_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                    f.write(chunk)
+                return version_dir
 
-            # 解压到版本目录
-            self._extract_downloaded_package(temp_path, version_dir)
+            except subprocess.CalledProcessError as e:
+                raise KnowledgeBaseError(f"克隆Git仓库失败: {e.stderr}")
+            except FileNotFoundError:
+                raise KnowledgeBaseError("未找到git命令，请先安装git")
+            finally:
+                # 临时目录会自动清理
+                pass
 
-            return version_dir
-
-        except requests.exceptions.Timeout as e:
-            raise KnowledgeBaseError(f"下载超时: {e}")
-        except requests.exceptions.HTTPError as e:
-            raise KnowledgeBaseError(f"HTTP错误: {e}")
-        except requests.exceptions.ConnectionError as e:
-            raise KnowledgeBaseError(f"连接错误: {e}")
-        except requests.exceptions.RequestException as e:
-            raise KnowledgeBaseError(f"下载失败: {e}")
-        finally:
-            # 清理临时文件
-            if temp_path.exists():
-                temp_path.unlink()
-
-    def _build_download_url(self, git_url: str, name: str, version: str) -> str:
-        """构建下载URL。
+    def _find_package_file(self, repo_path: Path, name: str, version: str) -> Path:
+        """在仓库的publish/目录中查找发布包文件。
 
         Args:
-            git_url: Git仓库URL
+            repo_path: Git仓库路径
             name: 包名
             version: 版本号
 
         Returns:
-            下载URL
+            发布包文件路径
 
         Raises:
-            KnowledgeBaseError: 不支持的URL格式
+            KnowledgeBaseError: 未找到发布包文件
         """
-        if "github.com" in git_url:
-            # GitHub 格式: https://github.com/owner/repo/releases/download/v1.0.0/package.tar.gz
-            owner, repo = self._extract_owner_repo(git_url)
-            return f"https://github.com/{owner}/{repo}/releases/download/v{version}/{name}.tar.gz"
-        elif "gitlab.com" in git_url:
-            # GitLab 格式: https://gitlab.com/owner/repo/-/archive/v1.0.0/repo-v1.0.0.tar.gz
-            owner, repo = self._extract_owner_repo(git_url)
-            return f"https://gitlab.com/{owner}/{repo}/-/archive/v{version}/{repo}-v{version}.tar.gz"
-        else:
-            raise KnowledgeBaseError(f"不支持的Git平台: {git_url}")
+        publish_dir = repo_path / PUBLISH_DIR
+        if not publish_dir.exists():
+            raise KnowledgeBaseError(f"仓库中未找到publish/目录: {repo_path}")
+
+        # 期望的文件名格式: <name>-<version>.tar.gz
+        expected_filename = f"{name}-{version}.tar.gz"
+        package_file = publish_dir / expected_filename
+
+        if not package_file.exists():
+            # 列出publish/目录中的所有文件，帮助调试
+            available_files = [f.name for f in publish_dir.iterdir() if f.is_file()]
+            raise KnowledgeBaseError(
+                f"在publish/目录中未找到 {expected_filename}\n"
+                f"可用的文件: {', '.join(available_files) if available_files else '无'}"
+            )
+
+        return package_file
 
     def _extract_owner_repo(self, git_url: str) -> tuple[str, str]:
         """从Git URL提取owner和repo。
@@ -286,10 +289,7 @@ class PackageDownloader:
         if not git_url or not git_url.strip():
             raise KnowledgeBaseError("Git URL不能为空")
 
-        # 验证URL格式
-        if not (git_url.startswith("https://") or git_url.startswith("http://")):
+        # 验证URL格式（支持 https://, http://, git@）
+        valid_prefixes = ("https://", "http://", "git@")
+        if not git_url.startswith(valid_prefixes):
             raise KnowledgeBaseError(f"Git URL格式无效: {git_url}")
-
-        # 确保URL包含GitHub或GitLab域名
-        if "github.com" not in git_url and "gitlab.com" not in git_url:
-            raise KnowledgeBaseError(f"只支持GitHub和GitLab: {git_url}")

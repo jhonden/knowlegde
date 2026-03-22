@@ -177,3 +177,135 @@ kb package --output [path]  # 打包知识库
 1. 询问清理范围（全部/特定库/特定版本）
 2. 调用kb cache clean [target]
 3. 验证缓存已清理
+
+## 技术规范
+
+### 目录结构
+
+```
+knowledge-base/
+├── src/                    # 源代码目录（必需）
+│   ├── Knowledge.md         # 知识库元数据（必需）
+│   └── ...
+├── deps/                   # 依赖目录（kb init创建）
+│   └── DependencyName/
+├── tests/                  # 测试目录（推荐）
+├── publish/                # 发布包目录（kb package创建）
+│   └── Name-Version.tar.gz
+└── README.md               # 项目说明（推荐）
+```
+
+### Knowledge.md格式
+
+```markdown
+# 知识库名称
+
+## 基本信息
+
+- **名称**: ExampleLib
+- **版本**: 1.2.0
+- **类型**: library/domain/...
+- **职责描述**: 描述知识库的用途
+
+## 依赖
+
+| 知识库名称 | 版本号 | Git地址 |
+|-----------|--------|---------|
+| CommonDataTypes | 1.2.0 | https://github.com/example/common-data-types |
+
+## 排除依赖
+
+| 知识库名称 | 版本号 | 原因 |
+|-----------|--------|------|
+| OldParser | 1.0.0 | 与其他依赖冲突 |
+```
+
+**格式规则：**
+- 必须包含基本信息章节（名称、版本、类型、职责描述）
+- 依赖和排除依赖使用Markdown表格
+- 表头必须与示例一致
+
+### CLI命令参考
+
+#### kb init [目录名]
+初始化知识库项目，自动下载所有依赖。
+
+**选项：**
+- `--path` 指定知识库文件路径
+
+```bash
+kb init
+kb init --path custom/path/Knowledge.md
+```
+
+#### kb package
+打包知识库为发布格式。
+
+**选项：**
+- `--output` 指定输出路径
+
+```bash
+kb package
+kb package --output /path/to/output
+```
+
+#### kb check-updates
+检查依赖项是否有可用更新。
+
+```bash
+kb check-updates
+```
+
+#### kb update [依赖名称]
+更新依赖项到最新版本。
+
+```bash
+kb update                # 更新所有依赖
+kb update CommonLib     # 更新特定依赖
+```
+
+#### kb cache info
+显示缓存信息（目录、大小、库数量）。
+
+```bash
+kb cache info
+```
+
+#### kb cache list
+列出所有缓存的库。
+
+```bash
+kb cache list
+```
+
+#### kb cache clean [TARGET]
+清理缓存。
+
+```bash
+kb cache clean all                  # 清理所有
+kb cache clean library-name            # 清理特定库
+kb cache clean library-name:version      # 清理特定版本
+```
+
+### Python API参考
+
+**注意：** 优先使用CLI命令，CLI无法满足时使用Python API。
+
+```python
+from kb.core import KnowledgeParser
+from kb.dependency import DependencyDownloader
+from kb.cache import CacheManager
+
+# 解析Knowledge.md
+parser = KnowledgeParser()
+metadata = parser.parse(Path("src/Knowledge.md"))
+
+# 下载依赖
+downloader = DependencyDownloader()
+downloader.download(Path("src/Knowledge.md"), Path("deps"))
+
+# 缓存管理
+cache = CacheManager()
+info = cache.get_info()
+cache.clean_all()
+```

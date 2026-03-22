@@ -304,31 +304,44 @@ knowlegde/
   - 基础验证和解析功能
   - 完整的测试套件
 
-## Claude Code Skill
+## Claude Code Skill Marketplace
 
-项目包含知识库开发Skill，用于辅助Claude智能体进行知识库项目的全流程开发。
+项目包含知识库开发Skill市场，用于辅助Claude智能体进行知识库项目的全流程开发。
 
-### 使用方式
+### 安装方式
+
+在Claude Code中安装此插件：
 
 ```bash
-# 将Skill文件复制到Claude Code的Skills目录
-cp .skills/knowledge-base-development.md ~/.claude/skills/
+# 添加插件市场
+/plugin add jhonden/knowledge
 
-# 或在Claude Code中启用自定义Skills目录
-# 设置 -> Skills -> Add Skills Directory
-# 选择项目根目录
+# 查看可用的技能
+/plugin list
+
+# 安装知识库开发技能（从市场自动加载）
 ```
 
-### Skill功能
+或在Claude Code设置中：
+1. 设置 → Plugins → Add Plugin
+2. 输入仓库地址：`jhonden/knowledge`
+3. 技能将自动加载到Claude Code
 
-- 指导创建知识库项目
-- 指导开发知识库功能
-- 指导打包和发布知识库
-- 提供故障排除指南
+### 技能列表
 
-### Skill内容概览
+项目提供以下技能：
 
-该Skill包含以下内容：
+1. **knowledge-base-development**
+   - 用途：创建、开发、打包和发布知识库项目的完整工作流程
+   - 适用场景：
+     - 创建新的知识库项目
+     - 开发和维护知识库（添加功能、修改代码、更新依赖）
+     - 打包和发布知识库
+     - 管理知识库依赖和缓存
+
+### 技能内容概览
+
+知识库开发技能包含以下内容：
 
 1. **概念说明** - 知识库系统的6个核心概念
    - 知识库（Knowledge Base）

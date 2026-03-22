@@ -167,11 +167,17 @@ kb package --output [path]  # 打包知识库
 
 **步骤：**
 1. 确认包文件已生成（publish/目录）
-2. 上传到仓库（GitHub/GitLab releases等）
-3. 更新README或文档
-4. 通知依赖此知识库的项目
+2. 将publish目录添加到git：`git add publish/`
+3. 提交并推送到远程：`git commit -m "publish: Release {version} of {name}" && git push`
+4. 更新README或文档
+5. 通知依赖此知识库的项目
 
-**注意：** 此步骤无CLI支持，需手动操作
+**说明：**
+- 包文件会从`git仓库的publish/`目录提供，其他用户通过`git clone`后可直接获取
+- 不需要GitHub Release，简化发布流程
+- 发布多个版本后，publish/目录会包含所有版本包
+
+**注意：** kb package只负责本地打包，发布到远程仓库通过git手动完成
 
 ### 任务A：添加新依赖
 

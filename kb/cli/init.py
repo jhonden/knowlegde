@@ -40,6 +40,24 @@ def _validate_knowledge_file(knowledge_file: Path) -> None:
 
 
 def _determine_knowledge_file(path: Optional[str]) -> Path:
+    """确定知识库文件路径，优先在src目录下查找
+
+    Args:
+        path: 用户指定的路径
+
+    Returns:
+        Path: 知识库文件的绝对路径
+    """
+    # 尝试在src目录下查找Knowledge.md
+    src_path = Path.cwd() / "src"
+    if src_path.exists() and src_path.is_dir():
+        knowledge_file = src_path / "Knowledge.md"
+        if knowledge_file.exists() and knowledge_file.is_file():
+            return knowledge_file
+
+    # 如果src目录不存在，使用默认路径或用户指定路径
+    return (Path.cwd() / DEFAULT_KNOWLEDGE_FILE).resolve() if path is None else Path(path).resolve()
+def _determine_knowledge_file(path: Optional[str]) -> Path:
     """确定知识库文件路径
 
     Args:

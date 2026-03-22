@@ -303,3 +303,58 @@ knowlegde/
   - 实现 init 和 package 命令
   - 基础验证和解析功能
   - 完整的测试套件
+
+## Claude Code Skill
+
+项目包含知识库开发Skill，用于辅助Claude智能体进行知识库项目的全流程开发。
+
+### 使用方式
+
+```bash
+# 将Skill文件复制到Claude Code的Skills目录
+cp .skills/knowledge-base-development.md ~/.claude/skills/
+
+# 或在Claude Code中启用自定义Skills目录
+# 设置 -> Skills -> Add Skills Directory
+# 选择项目根目录
+```
+
+### Skill功能
+
+- 指导创建知识库项目
+- 指导开发知识库功能
+- 指导打包和发布知识库
+- 提供故障排除指南
+
+### Skill内容概览
+
+该Skill包含以下内容：
+
+1. **概念说明** - 知识库系统的6个核心概念
+   - 知识库（Knowledge Base）
+   - Knowledge.md
+   - 语义化版本号
+   - 依赖管理
+   - 缓存机制
+   - 打包和发布
+
+2. **工作流程** - 完整的开发流程
+   - 4个阶段：创建、开发、打包、发布
+   - 4个任务：添加依赖、更新版本、修复冲突、清理缓存
+
+3. **技术规范** - 详细的技术文档
+   - 目录结构说明
+   - Knowledge.md文件格式
+   - CLI命令参考
+   - Python API参考
+
+4. **最佳实践** - 开发建议
+   - 版本管理
+   - 依赖管理
+   - 项目结构
+   - 开发流程
+   - 缓存管理
+
+5. **常见陷阱** - 故障排除指南
+   - 5个常见陷阱及解决方案
+   - 完整的故障排除清单

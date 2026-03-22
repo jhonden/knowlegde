@@ -26,7 +26,7 @@ def package(src: str) -> None:
 
     # 检查Knowledge.md是否存在
     try:
-        knowledge_file = find_knowledge_file(cwd)
+        knowledge_file = find_knowledge_file(cwd, src_path)
         click.echo(f"找到知识库文件: {knowledge_file}")
     except FileNotFoundError:
         click.echo(f"错误: 未找到知识库文件 'Knowledge.md'")

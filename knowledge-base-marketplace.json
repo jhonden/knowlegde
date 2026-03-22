@@ -1,0 +1,33 @@
+{
+  "name": "knowledge-base-market",
+  "displayName": "Knowledge Base Skills Marketplace",
+  "description": "知识库开发相关技能集合市场，支持知识库项目的创建、开发、打包、发布全流程",
+  "version": "1.0.0",
+  "author": {
+    "name": "Gaowen Gao",
+    "email": "gaowen@example.com"
+  },
+  "homepage": "https://github.com/jhonden/knowledge",
+  "repository": "https://github.com/jhonden/knowledge",
+  "license": "MIT",
+  "keywords": ["knowledge-base", "skills", "cli", "development", "dependency", "packaging", "publishing"],
+  "skills": "./skills/",
+  "agents": [],
+  "commands": [
+    {
+      "name": "list-skills",
+      "displayName": "列出所有已安装的知识库技能",
+      "description": "列出所有已注册的知识库技能"
+    },
+    {
+      "name": "show-skill",
+      "displayName": "显示指定技能的详细信息",
+      "description": "显示指定技能的完整信息和文档"
+    },
+    {
+      "name": "help",
+      "displayName": "显示帮助信息",
+      "description": "显示市场使用帮助和命令说明"
+    }
+  ]
+}

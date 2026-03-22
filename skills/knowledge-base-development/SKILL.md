@@ -7,6 +7,30 @@ description: Use when creating, developing, packaging, or publishing knowledge b
 
 帮助用户创建、开发、打包和发布知识库项目的完整工作流程。
 
+## 前置准备
+
+在使用此Skill前，需要先安装kb命令行工具。
+
+### 安装kb工具
+
+```bash
+# 克隆仓库
+git clone https://github.com/jhonden/knowlegde.git
+cd knowlegde
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 验证安装
+kb --version
+```
+
+**环境要求：**
+- Python 3.8+
+- pip
+
+安装完成后，`kb`命令将可在系统上使用。所有kb命令都支持`--help`选项查看详细帮助。
+
 ## 适用场景
 
 当涉及知识库项目的以下操作时使用此Skill：

@@ -7,8 +7,8 @@
     "name": "jhonden",
     "email": "jhonden@example.com"
   },
-  "homepage": "https://github.com/jhonden/knowledge",
-  "repository": "https://github.com/jhonden/knowledge",
+  "homepage": "https://github.com/jhonden/knowlegde",
+  "repository": "https://github.com/jhonden/knowlegde",
   "license": "MIT",
   "keywords": ["knowledge-base", "skills", "cli", "development", "dependency", "packaging", "publishing"],
   "skills": "./skills/",

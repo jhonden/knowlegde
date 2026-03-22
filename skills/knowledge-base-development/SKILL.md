@@ -1,3 +1,8 @@
+---
+name: knowledge-base-development
+description: Use when creating, developing, packaging, or publishing knowledge base projects
+---
+
 # Knowledge Base Development
 
 帮助用户创建、开发、打包和发布知识库项目的完整工作流程。
@@ -529,4 +534,3 @@ kb <command> --verbose
 
 - 阅读项目README.md
 - 查看相关测试代码
-

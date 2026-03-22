@@ -495,11 +495,17 @@ cache.clean_all()
 - src/目录不存在
 - Knowledge.md缺失或格式错误
 - 缺少必要文件
+- **当前目录不符合知识库结构**（未在正确的项目根目录运行）
 
 **解决方案：**
 - 确保在知识库根目录运行kb package
 - 验证src/Knowledge.md存在且格式正确
 - 运行kb --help查看命令详情
+
+**注意：** kb package命令会在src/目录下查找Knowledge.md文件，请确保：
+1. 在知识库项目根目录下运行命令
+2. src/目录存在并包含Knowledge.md文件
+3. 使用 `--src` 选项指定正确的源码目录（仅当目录名不是src时）
 
 ### 陷阱5：依赖路径问题
 
